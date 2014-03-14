@@ -17,10 +17,19 @@
 #import "SUScheduledUpdateDriver.h"
 #import "SUConstants.h"
 #import "SULog.h"
+#import "SUCodeSigningVerifier.h"
 #include <SystemConfiguration/SystemConfiguration.h>
 
+NSString *const SUUpdaterDidFinishLoadingAppCastNotification = @"SUUpdaterDidFinishLoadingAppCastNotification";
+NSString *const SUUpdaterDidFindValidUpdateNotification = @"SUUpdaterDidFindValidUpdateNotification";
+NSString *const SUUpdaterDidNotFindUpdateNotification = @"SUUpdaterDidNotFindUpdateNotification";
+NSString *const SUUpdaterWillInstallUpdateNotification = @"SUUpdaterWillInstallUpdateNotification";
+NSString *const SUUpdaterWillRelaunchApplicationNotification = @"SUUpdaterWillRelaunchApplicationNotification";
+NSString *const SUUpdaterAppcastItemNotificationKey = @"SUUpdaterAppcastItemNotificationKey";
+NSString *const SUUpdaterAppcastNotificationKey = @"SUUpdaterAppCastNotificationKey";
 
-@interface SUUpdater (Private)
+@interface SUUpdater ()
+@property (retain) NSTimer *checkTimer;
 - (id)initForBundle:(NSBundle *)bundle;
 - (void)startUpdateCycle;
 - (void)checkForUpdatesWithDriver:(SUUpdateDriver *)updateDriver;
@@ -37,6 +46,8 @@
 @end
 
 @implementation SUUpdater
+@synthesize delegate;
+@synthesize checkTimer;
 
 #pragma mark Initialization
 
@@ -83,12 +94,18 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 		
 #if !ENDANGER_USERS_WITH_INSECURE_UPDATES
 		// Saving-the-developer-from-a-stupid-mistake-check:
-		if (![[[self feedURL] scheme] isEqualToString:@"https"] && ![host publicDSAKey])
-		{
-			[self notifyWillShowModalAlert];
-			NSRunAlertPanel(@"Insecure update error!", @"For security reasons, you need to distribute your appcast over SSL or sign your updates. See Sparkle's documentation for more information.", @"OK", nil, nil);
-			[self notifyDidShowModalAlert];
-		}
+        BOOL hasPublicDSAKey = [host publicDSAKey] != nil;
+        BOOL isMainBundle = [bundle isEqualTo:[NSBundle mainBundle]];
+        BOOL hostIsCodeSigned = [SUCodeSigningVerifier hostApplicationIsCodeSigned];
+        if (!isMainBundle && !hasPublicDSAKey) {
+            [self notifyWillShowModalAlert];
+            NSRunAlertPanel(@"Insecure update error!", @"For security reasons, you need to sign your updates with a DSA key. See Sparkle's documentation for more information.", @"OK", nil, nil);
+            [self notifyDidShowModalAlert];
+        } else if (isMainBundle && !(hasPublicDSAKey || hostIsCodeSigned)) {
+            [self notifyWillShowModalAlert];
+            NSRunAlertPanel(@"Insecure update error!", @"For security reasons, you need to code sign your application or sign your updates with a DSA key. See Sparkle's documentation for more information.", @"OK", nil, nil);
+            [self notifyDidShowModalAlert];
+        }
 #endif
         // This runs the permission prompt if needed, but never before the app has finished launching because the runloop won't run before that
         [self performSelector:@selector(startUpdateCycle) withObject:nil afterDelay:0];
@@ -194,8 +211,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	if (checkTimer)
 	{
 		[checkTimer invalidate];
-		[checkTimer release];		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
-		checkTimer = nil;
+		self.checkTimer = nil; // UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
 	}
 	if (![self automaticallyChecksForUpdates]) return;
 	
@@ -212,7 +228,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 		delayUntilCheck = (updateCheckInterval - intervalSinceCheck); // It hasn't been long enough.
 	else
 		delayUntilCheck = 0; // We're overdue! Run one now.
-	checkTimer = [[NSTimer scheduledTimerWithTimeInterval:delayUntilCheck target:self selector:@selector(checkForUpdatesInBackground) userInfo:nil repeats:NO] retain];		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
+	self.checkTimer = [NSTimer scheduledTimerWithTimeInterval:delayUntilCheck target:self selector:@selector(checkForUpdatesInBackground) userInfo:nil repeats:NO];		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
 }
 
 
@@ -288,6 +304,9 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 
 - (IBAction)checkForUpdates: (id)sender
 {
+	if (driver && [driver isInterruptible])
+		[driver abortUpdate];
+
 	[self checkForUpdatesWithDriver:[[[SUUserInitiatedUpdateDriver alloc] initWithUpdater:self] autorelease]];
 }
 
@@ -299,7 +318,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 - (void)checkForUpdatesWithDriver:(SUUpdateDriver *)d
 {
 	if ([self updateInProgress]) { return; }
-	if (checkTimer) { [checkTimer invalidate]; [checkTimer release]; checkTimer = nil; }		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
+	if (checkTimer) { [checkTimer invalidate]; self.checkTimer = nil; }		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
 	
 	SUClearLog();
 	SULog( @"===== %@ =====", [[NSFileManager defaultManager] displayNameAtPath: [[NSBundle mainBundle] bundlePath]] );
@@ -455,7 +474,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 
 - (BOOL)sendsSystemProfile
 {
-	return [host boolForUserDefaultsKey:SUSendProfileInfoKey];
+	return [host boolForKey:SUSendProfileInfoKey];
 }
 
 - (NSURL *)parameterizedFeedURL
@@ -484,9 +503,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	
 	// Build up the parameterized URL.
 	NSMutableArray *parameterStrings = [NSMutableArray array];
-	NSEnumerator *profileInfoEnumerator = [parameters objectEnumerator];
-	NSDictionary *currentProfileInfo;
-	while ((currentProfileInfo = [profileInfoEnumerator nextObject]))
+	for (NSDictionary *currentProfileInfo in parameters)
 		[parameterStrings addObject:[NSString stringWithFormat:@"%@=%@", [[[currentProfileInfo objectForKey:@"key"] description] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding], [[[currentProfileInfo objectForKey:@"value"] description] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
 	
 	NSString *separatorCharacter = @"?";
@@ -523,7 +540,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 {
 	[self unregisterAsObserver];
 	[host release];
-	if (checkTimer) { [checkTimer invalidate]; [checkTimer release]; checkTimer = nil; }		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
+	if (checkTimer) { [checkTimer invalidate]; [checkTimer release]; self.checkTimer = nil; }		// UK 2009-03-16 Timer is non-repeating, may have invalidated itself, so we had to retain it.
 	[super dealloc];
 }
 
@@ -534,17 +551,11 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	return YES;
 }
 
-- (void)setDelegate:aDelegate
-{
-	delegate = aDelegate;
-}
-
 - (BOOL)updateInProgress
 {
 	return driver && ([driver finished] == NO);
 }
 
-- delegate { return delegate; }
 - (NSBundle *)hostBundle { return [host bundle]; }
 
 @end

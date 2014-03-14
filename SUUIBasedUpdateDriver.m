@@ -13,6 +13,7 @@
 #import "SUHost.h"
 #import "SUStatusController.h"
 #import "SUConstants.h"
+#import "SUPasswordPrompt.h"
 
 @implementation SUUIBasedUpdateDriver
 
@@ -49,6 +50,7 @@
 {
 	if ([[updater delegate] respondsToSelector:@selector(updaterDidNotFindUpdate:)])
 		[[updater delegate] updaterDidNotFindUpdate:updater];
+	[[NSNotificationCenter defaultCenter] postNotificationName:SUUpdaterDidNotFindUpdateNotification object:updater];
 	
 	NSAlert *alert = [NSAlert alertWithMessageText:SULocalizedString(@"You're up-to-date!", nil) defaultButton:SULocalizedString(@"OK", nil) alternateButton:nil otherButton:nil informativeTextWithFormat:SULocalizedString(@"%@ %@ is currently the newest version available.", nil), [host name], [host displayVersion]];
 	[self showModalAlert:alert];
@@ -140,11 +142,7 @@
 	if ([statusController maxProgressValue] == 0.0)
 	{
 		NSDictionary * attributes;
-#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_4
-		attributes = [[NSFileManager defaultManager] fileAttributesAtPath:downloadPath traverseLink:NO];
-#else
 		attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:downloadPath error:nil];
-#endif
 		[statusController setMaxProgressValue:[[attributes objectForKey:NSFileSize] doubleValue]];
 	}
 	[statusController setProgressValue:[statusController progressValue] + (double)length];
@@ -158,6 +156,19 @@
 	[statusController setButtonTitle:SULocalizedString(@"Install and Relaunch", nil) target:self action:@selector(installAndRestart:) isDefault:YES];
 	[[statusController window] makeKeyAndOrderFront: self];
 	[NSApp requestUserAttention:NSInformationalRequest];	
+}
+
+- (void)unarchiver:(SUUnarchiver *)unarchiver requiresPasswordReturnedViaInvocation:(NSInvocation *)invocation
+{
+    SUPasswordPrompt *prompt = [[SUPasswordPrompt alloc] initWithHost:host];
+    NSString *password = nil;
+    if([prompt run]) 
+    {
+        password = [prompt password];
+    }
+    [prompt release];
+    [invocation setArgument:&password atIndex:2];
+    [invocation invoke];
 }
 
 - (void)installAndRestart: (id)sender
@@ -187,8 +198,7 @@
 
 - (void)abortUpdateWithError:(NSError *)error
 {
-    NSString* format = [error localizedDescription];
-	NSAlert *alert = [NSAlert alertWithMessageText:SULocalizedString(@"Update Error!", nil) defaultButton:SULocalizedString(@"Cancel Update", nil) alternateButton:nil otherButton:nil informativeTextWithFormat:@"%@", format];
+	NSAlert *alert = [NSAlert alertWithMessageText:SULocalizedString(@"Update Error!", nil) defaultButton:SULocalizedString(@"Cancel Update", nil) alternateButton:nil otherButton:nil informativeTextWithFormat: @"%@", [error localizedDescription]];
 	[self showModalAlert:alert];
 	[super abortUpdateWithError:error];
 }

@@ -13,9 +13,10 @@
 #import "SUVersionComparisonProtocol.h"
 
 @class SUHost;
-@interface SUInstaller : NSObject { }
-+ (void)		installFromUpdateFolder:(NSString *)updateFolder overHost:(SUHost *)host delegate:delegate synchronously:(BOOL)synchronously versionComparator:(id <SUVersionComparison>)comparator;
-+ (void)		finishInstallationWithResult:(BOOL)result host:(SUHost *)host error:(NSError *)error delegate:delegate;
+@interface SUInstaller : NSObject
++ (NSString *)  appPathInUpdateFolder:(NSString *)updateFolder forHost:(SUHost *)host;
++ (void)		installFromUpdateFolder:(NSString *)updateFolder overHost:(SUHost *)host installationPath:(NSString *)installationPath delegate:delegate synchronously:(BOOL)synchronously versionComparator:(id <SUVersionComparison>)comparator;
++ (void)		finishInstallationToPath:(NSString *)installationPath withResult:(BOOL)result host:(SUHost *)host error:(NSError *)error delegate:delegate;
 + (NSString*)	updateFolder;
 + (void)		notifyDelegateOfFailure: (NSDictionary*)dict;
 @end

@@ -12,6 +12,9 @@
 NSString * const SUUpdateDriverFinishedNotification = @"SUUpdateDriverFinished";
 
 @implementation SUUpdateDriver
+
+@synthesize host;
+
 - initWithUpdater:(SUUpdater *)anUpdater
 {
 	if ((self = [super init]))
@@ -33,11 +36,13 @@ NSString * const SUUpdateDriverFinishedNotification = @"SUUpdateDriverFinished";
 	[[NSNotificationCenter defaultCenter] postNotificationName:SUUpdateDriverFinishedNotification object:self];
 }
 
+- (BOOL)isInterruptible { return isInterruptible; }
+
 - (BOOL)finished { return finished; }
 
 - (void)dealloc
 {
-    [host release];
+    self.host = nil;
 	[appcastURL release];
     [super dealloc];
 }

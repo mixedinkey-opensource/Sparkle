@@ -14,120 +14,43 @@
 #import "SUAppcastItem.h"
 #import "SULog.h"
 
+@interface SUAppcastItem ()
+@property (copy, readwrite) NSString *title;
+@property (copy, readwrite) NSDate *date;
+@property (copy, readwrite) NSString *itemDescription;
+@property (retain, readwrite) NSURL *releaseNotesURL;
+@property (copy, readwrite) NSString *DSASignature;
+@property (copy, readwrite) NSString *minimumSystemVersion;
+@property (copy, readwrite) NSString *maximumSystemVersion;
+@property (retain, readwrite) NSURL *fileURL;
+@property (copy, readwrite) NSString *versionString;
+@property (copy, readwrite) NSString *displayVersionString;
+@property (copy, readwrite) NSDictionary *deltaUpdates;
+@property (retain, readwrite) NSURL *infoURL;
+@end
+
 @implementation SUAppcastItem
-
-// Attack of accessors!
-
-- (NSString *)title { return [[title retain] autorelease]; }
-
-- (void)setTitle:(NSString *)aTitle
-{
-	if (title == aTitle) return;
-    [title release];
-    title = [aTitle copy];
-}
-
-
-- (NSDate *)date { return [[date retain] autorelease]; }
-
-- (void)setDate:(NSDate *)aDate
-{
-	if (date == aDate) return;
-    [date release];
-    date = [aDate copy];
-}
-
-
-- (NSString *)itemDescription { return [[itemDescription retain] autorelease]; }
-
-- (void)setItemDescription:(NSString *)anItemDescription
-{
-	if (itemDescription == anItemDescription) return;
-    [itemDescription release];
-    itemDescription = [anItemDescription copy];
-}
-
-
-- (NSURL *)releaseNotesURL { return [[releaseNotesURL retain] autorelease]; }
-
-- (void)setReleaseNotesURL:(NSURL *)aReleaseNotesURL
-{
-	if (releaseNotesURL == aReleaseNotesURL) return;
-    [releaseNotesURL release];
-    releaseNotesURL = [aReleaseNotesURL copy];
-}
-
-
-- (NSString *)DSASignature { return [[DSASignature retain] autorelease]; }
-
-- (void)setDSASignature:(NSString *)aDSASignature
-{
-	if (DSASignature == aDSASignature) return;
-    [DSASignature release];
-    DSASignature = [aDSASignature copy];
-}
-			
-
-- (NSURL *)fileURL { return [[fileURL retain] autorelease]; }
-
-- (void)setFileURL:(NSURL *)aFileURL
-{
-	if (fileURL == aFileURL) return;
-    [fileURL release];
-    fileURL = [aFileURL copy];
-}
-
-
-- (NSString *)versionString { return [[versionString retain] autorelease]; }
-
-- (void)setVersionString:(NSString *)s
-{
-	if (versionString == s) return;
-    [versionString release];
-    versionString = [s copy];
-}
-
-
-- (NSString *)displayVersionString { return [[displayVersionString retain] autorelease]; }
-
-- (void)setDisplayVersionString:(NSString *)s
-{
-	if (displayVersionString == s) return;
-    [displayVersionString release];
-    displayVersionString = [s copy];
-}
-
-
-- (NSString *)minimumSystemVersion { return [[minimumSystemVersion retain] autorelease]; }
-- (void)setMinimumSystemVersion:(NSString *)systemVersionString
-{
-	if (minimumSystemVersion == systemVersionString) return;
-	[minimumSystemVersion release];
-	minimumSystemVersion = [systemVersionString copy];
-}
-
-
-- (NSURL *)infoURL	{ return [[infoURL retain] autorelease]; }	// UK 2007-08-31 (whole method)
-
-- (void)setInfoURL:(NSURL *)aFileURL	// UK 2007-08-31 (whole method)
-{
-	if( aFileURL == infoURL ) return;
-	[infoURL release];
-	infoURL = [aFileURL copy];
-}
-
-- (NSDictionary *)deltaUpdates { return [[deltaUpdates retain] autorelease]; }
-
-- (void)setDeltaUpdates:(NSDictionary *)updates
-{
-	if (deltaUpdates == updates) return;
-	[deltaUpdates release];
-	deltaUpdates = [updates copy];
-}
+@synthesize date;
+@synthesize deltaUpdates;
+@synthesize displayVersionString;
+@synthesize DSASignature;
+@synthesize fileURL;
+@synthesize infoURL;
+@synthesize itemDescription;
+@synthesize maximumSystemVersion;
+@synthesize minimumSystemVersion;
+@synthesize releaseNotesURL;
+@synthesize title;
+@synthesize versionString;
 
 - (BOOL)isDeltaUpdate
 {
 	return [[propertiesDictionary objectForKey:@"enclosure"] objectForKey:@"sparkle:deltaFrom"] != nil;
+}
+
+- (BOOL)isCriticalUpdate
+{
+    return [[propertiesDictionary objectForKey:@"sparkle:tags"] containsObject:@"sparkle:criticalUpdate"];
 }
 
 - initWithDictionary:(NSDictionary *)dict
@@ -171,9 +94,9 @@
 		}
         
 		propertiesDictionary = [[NSMutableDictionary alloc] initWithDictionary:dict];
-		[self setTitle:[dict objectForKey:@"title"]];
-		[self setDate:[dict objectForKey:@"pubDate"]];
-		[self setItemDescription:[dict objectForKey:@"description"]];
+		self.title = [dict objectForKey:@"title"];
+		self.date = [dict objectForKey:@"pubDate"];
+		self.itemDescription = [dict objectForKey:@"description"];
 		
 		NSString*	theInfoURL = [dict objectForKey:@"link"];
 		if( theInfoURL )
@@ -181,7 +104,7 @@
 			if( ![theInfoURL isKindOfClass: [NSString class]] )
 				SULog(@"SUAppcastItem -initWithDictionary: Info URL is not of valid type.");
 			else
-				[self setInfoURL:[NSURL URLWithString:theInfoURL]];
+				self.infoURL = [NSURL URLWithString:theInfoURL];
 		}
 		
 		// Need an info URL or an enclosure URL. Former to show "More Info"
@@ -203,37 +126,40 @@
 			return nil;
 		}
 		
-		if( enclosureURLString )
-			[self setFileURL: [NSURL URLWithString: [enclosureURLString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
+		if( enclosureURLString ) {
+			NSString *fileURLString = [[enclosureURLString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+			self.fileURL = [NSURL URLWithString:fileURLString];
+		}
 		if( enclosure )
-			[self setDSASignature:[enclosure objectForKey:@"sparkle:dsaSignature"]];		
+			self.DSASignature = [enclosure objectForKey:@"sparkle:dsaSignature"];
 		
-		[self setVersionString: newVersion];
-		[self setMinimumSystemVersion: [dict objectForKey:@"sparkle:minimumSystemVersion"]];
+		self.versionString = newVersion;
+		self.minimumSystemVersion = [dict objectForKey:@"sparkle:minimumSystemVersion"];
+        self.maximumSystemVersion = [dict objectForKey:@"sparkle:maximumSystemVersion"];
 		
 		NSString *shortVersionString = [enclosure objectForKey:@"sparkle:shortVersionString"];
+        if (nil == shortVersionString)
+            shortVersionString = [dict objectForKey:@"sparkle:shortVersionString"]; // fall back on the <item>
+        
 		if (shortVersionString)
-			[self setDisplayVersionString: shortVersionString];
+			self.displayVersionString = shortVersionString;
 		else
-			[self setDisplayVersionString: [self versionString]];
+			self.displayVersionString = [self versionString];
 		
 		// Find the appropriate release notes URL.
 		if ([dict objectForKey:@"sparkle:releaseNotesLink"])
-			[self setReleaseNotesURL:[NSURL URLWithString:[dict objectForKey:@"sparkle:releaseNotesLink"]]];
-		else if ([[self itemDescription] hasPrefix:@"http://"]) // if the description starts with http://, use that.
-			[self setReleaseNotesURL:[NSURL URLWithString:[self itemDescription]]];
+			self.releaseNotesURL = [NSURL URLWithString:[dict objectForKey:@"sparkle:releaseNotesLink"]];
+		else if ([self.itemDescription hasPrefix:@"http://"] || [self.itemDescription hasPrefix:@"https://"]) // if the description starts with http:// or https:// use that.
+			self.releaseNotesURL = [NSURL URLWithString:self.itemDescription];
 		else
-			[self setReleaseNotesURL:nil];
+			self.releaseNotesURL = nil;
 
         if ([dict objectForKey:@"deltas"])
 		{
             NSMutableDictionary *deltas = [NSMutableDictionary dictionary];
             NSArray *deltaDictionaries = [dict objectForKey:@"deltas"];
-            NSEnumerator *deltaDictionariesEnum = [deltaDictionaries objectEnumerator];
-            NSDictionary *deltaDictionary;
-            while ((deltaDictionary = [deltaDictionariesEnum nextObject]))
-			{
-                NSMutableDictionary *fakeAppCastDict = [dict mutableCopy];
+			for (NSDictionary *deltaDictionary in [deltaDictionaries objectEnumerator]) {
+				NSMutableDictionary *fakeAppCastDict = [dict mutableCopy];
                 [fakeAppCastDict removeObjectForKey:@"deltas"];
                 [fakeAppCastDict setObject:deltaDictionary forKey:@"enclosure"];
                 SUAppcastItem *deltaItem = [[[self class] alloc] initWithDictionary:fakeAppCastDict];
@@ -241,8 +167,8 @@
 
                 [deltas setObject:deltaItem forKey:[deltaDictionary objectForKey:@"sparkle:deltaFrom"]];
                 [deltaItem release];
-            }
-            [self setDeltaUpdates:deltas];
+			}
+            self.deltaUpdates = deltas;
         }
 	}
 	return self;
@@ -250,16 +176,16 @@
 
 - (void)dealloc
 {
-    [self setTitle:nil];
-    [self setDate:nil];
-    [self setItemDescription:nil];
-    [self setReleaseNotesURL:nil];
-    [self setDSASignature:nil];
-	[self setMinimumSystemVersion: nil];
-    [self setFileURL:nil];
-    [self setVersionString:nil];
-	[self setDisplayVersionString:nil];
-	[self setInfoURL:nil];
+	self.title = nil;
+	self.date = nil;
+	self.itemDescription = nil;
+	self.releaseNotesURL = nil;
+	self.DSASignature = nil;
+	self.minimumSystemVersion = nil;
+	self.fileURL = nil;
+	self.versionString = nil;
+	self.displayVersionString = nil;
+	self.infoURL = nil;
 	[propertiesDictionary release];
     [super dealloc];
 }

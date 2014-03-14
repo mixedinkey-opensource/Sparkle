@@ -22,9 +22,7 @@
 								   @"extractTBZ", @".tar.bz2", @"extractTBZ", @".tbz", nil] retain];
 
 	NSString *lastPathComponent = [path lastPathComponent];
-	NSEnumerator *typeEnumerator = [typeSelectorDictionary keyEnumerator];
-	id currentType;
-	while ((currentType = [typeEnumerator nextObject]))
+	for (id currentType in typeSelectorDictionary)
 	{
 		if ([currentType length] > [lastPathComponent length]) continue;
 		if ([[lastPathComponent substringFromIndex:[lastPathComponent length] - [currentType length]] isEqualToString:currentType])
@@ -51,15 +49,12 @@
 
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	FILE *fp = NULL, *cmdFP = NULL;
+    char *oldDestinationString = NULL;
 	
 	SULog(@"Extracting %@ using '%@'",archivePath,command);
     
 	// Get the file size.
-#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_4
-	NSNumber *fs = [[[NSFileManager defaultManager] fileAttributesAtPath:archivePath traverseLink:NO] objectForKey:NSFileSize];
-#else
 	NSNumber *fs = [[[NSFileManager defaultManager] attributesOfItemAtPath:archivePath error:nil] objectForKey:NSFileSize];
-#endif
 	if (fs == nil) goto reportError;
 	
 	// Thank you, Allan Odgaard!
@@ -67,6 +62,7 @@
 	fp = fopen([archivePath fileSystemRepresentation], "r");
 	if (!fp) goto reportError;
 	
+    oldDestinationString = getenv("DESTINATION");
 	setenv("DESTINATION", [[archivePath stringByDeletingLastPathComponent] fileSystemRepresentation], 1);
 	cmdFP = popen([command fileSystemRepresentation], "w");
 	size_t written;
@@ -99,6 +95,10 @@ reportError:
 finally:
 	if (fp)
 		fclose(fp);
+    if (oldDestinationString)
+        setenv("DESTINATION", oldDestinationString, 1);
+    else
+        unsetenv("DESTINATION");
 	[pool release];
 }
 

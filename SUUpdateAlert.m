@@ -18,7 +18,7 @@
 #import "SUConstants.h"
 
 
-@interface WebView (SUTenFiveProperty)
+@interface WebView ()
 
 -(void)	setDrawsBackground: (BOOL)state;
 
@@ -26,6 +26,7 @@
 
 
 @implementation SUUpdateAlert
+@synthesize delegate;
 
 - (id)initWithAppcastItem:(SUAppcastItem *)item host:(SUHost *)aHost
 {
@@ -93,8 +94,14 @@
 {
 	// Set the default font	
 	[releaseNotesView setPreferencesIdentifier:[SPARKLE_BUNDLE bundleIdentifier]];
-	[[releaseNotesView preferences] setStandardFontFamily:[[NSFont systemFontOfSize:8] familyName]];
-	[[releaseNotesView preferences] setDefaultFontSize:(int)[NSFont systemFontSizeForControlSize:NSSmallControlSize]];
+    WebPreferences *prefs = [releaseNotesView preferences];
+    NSString *familyName = [[NSFont systemFontOfSize:8] familyName];
+    if ([familyName hasPrefix:@"."]) { // 10.9 returns ".Lucida Grande UI", which isn't a valid name for the WebView
+        familyName = @"Lucida Grande";
+    }
+	[prefs setStandardFontFamily:familyName];
+	[prefs setDefaultFontSize:(int)[NSFont systemFontSizeForControlSize:NSSmallControlSize]];
+    [prefs setPlugInsEnabled:NO];
 	[releaseNotesView setFrameLoadDelegate:self];
 	[releaseNotesView setPolicyDelegate:self];
 	
@@ -166,6 +173,9 @@
 	{
 		// Resize the window to be appropriate for not having a huge release notes view.
 		frame.size.height -= [releaseNotesView frame].size.height + 40; // Extra 40 is for the release notes label and margin.
+        
+        if ([self allowsAutomaticUpdates])
+            frame.size.height += 10; // Make room for the check box.
 		
 		// Hiding the resize handles is not enough on 10.5, you can still click
 		//	where they would be, so we set the min/max sizes to be equal to
@@ -174,8 +184,7 @@
 		[[self window] setMinSize: frame.size];
 		[[self window] setMaxSize: frame.size];
 	}
-	
-	if (![self allowsAutomaticUpdates])
+    else if (![self allowsAutomaticUpdates])
 	{
 		NSRect boxFrame = [[[releaseNotesView superview] superview] frame];
 		boxFrame.origin.y -= 20;
@@ -321,9 +330,7 @@
 	
 	if (webViewMenuItems)
 	{
-		NSEnumerator *itemEnumerator = [defaultMenuItems objectEnumerator];
-		NSMenuItem *menuItem = nil;
-		while ((menuItem = [itemEnumerator nextObject]))
+		for (NSMenuItem *menuItem in defaultMenuItems)
 		{
 			NSInteger tag = [menuItem tag];
 			
@@ -344,11 +351,6 @@
 	}
 	
 	return webViewMenuItems;
-}
-
-- (void)setDelegate:del
-{
-	delegate = del;
 }
 
 @end
