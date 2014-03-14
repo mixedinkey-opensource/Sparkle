@@ -142,11 +142,7 @@
 	if ([statusController maxProgressValue] == 0.0)
 	{
 		NSDictionary * attributes;
-#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_4
-		attributes = [[NSFileManager defaultManager] fileAttributesAtPath:downloadPath traverseLink:NO];
-#else
 		attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:downloadPath error:nil];
-#endif
 		[statusController setMaxProgressValue:[[attributes objectForKey:NSFileSize] doubleValue]];
 	}
 	[statusController setProgressValue:[statusController progressValue] + (double)length];
@@ -202,7 +198,7 @@
 
 - (void)abortUpdateWithError:(NSError *)error
 {
-	NSAlert *alert = [NSAlert alertWithMessageText:SULocalizedString(@"Update Error!", nil) defaultButton:SULocalizedString(@"Cancel Update", nil) alternateButton:nil otherButton:nil informativeTextWithFormat:@"%@", [error localizedDescription]];
+	NSAlert *alert = [NSAlert alertWithMessageText:SULocalizedString(@"Update Error!", nil) defaultButton:SULocalizedString(@"Cancel Update", nil) alternateButton:nil otherButton:nil informativeTextWithFormat: @"%@", [error localizedDescription]];
 	[self showModalAlert:alert];
 	[super abortUpdateWithError:error];
 }

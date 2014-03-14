@@ -18,7 +18,7 @@
 #import "SUConstants.h"
 
 
-@interface WebView (SUTenFiveProperty)
+@interface WebView ()
 
 -(void)	setDrawsBackground: (BOOL)state;
 
@@ -26,6 +26,7 @@
 
 
 @implementation SUUpdateAlert
+@synthesize delegate;
 
 - (id)initWithAppcastItem:(SUAppcastItem *)item host:(SUHost *)aHost
 {
@@ -93,8 +94,14 @@
 {
 	// Set the default font	
 	[releaseNotesView setPreferencesIdentifier:[SPARKLE_BUNDLE bundleIdentifier]];
-	[[releaseNotesView preferences] setStandardFontFamily:[[NSFont systemFontOfSize:8] familyName]];
-	[[releaseNotesView preferences] setDefaultFontSize:(int)[NSFont systemFontSizeForControlSize:NSSmallControlSize]];
+    WebPreferences *prefs = [releaseNotesView preferences];
+    NSString *familyName = [[NSFont systemFontOfSize:8] familyName];
+    if ([familyName hasPrefix:@"."]) { // 10.9 returns ".Lucida Grande UI", which isn't a valid name for the WebView
+        familyName = @"Lucida Grande";
+    }
+	[prefs setStandardFontFamily:familyName];
+	[prefs setDefaultFontSize:(int)[NSFont systemFontSizeForControlSize:NSSmallControlSize]];
+    [prefs setPlugInsEnabled:NO];
 	[releaseNotesView setFrameLoadDelegate:self];
 	[releaseNotesView setPolicyDelegate:self];
 	
@@ -323,9 +330,7 @@
 	
 	if (webViewMenuItems)
 	{
-		NSEnumerator *itemEnumerator = [defaultMenuItems objectEnumerator];
-		NSMenuItem *menuItem = nil;
-		while ((menuItem = [itemEnumerator nextObject]))
+		for (NSMenuItem *menuItem in defaultMenuItems)
 		{
 			NSInteger tag = [menuItem tag];
 			
@@ -346,11 +351,6 @@
 	}
 	
 	return webViewMenuItems;
-}
-
-- (void)setDelegate:del
-{
-	delegate = del;
 }
 
 @end

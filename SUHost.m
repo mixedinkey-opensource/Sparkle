@@ -12,15 +12,19 @@
 #import <sys/mount.h> // For statfs for isRunningOnReadOnlyVolume
 #import "SULog.h"
 
+@interface SUHost ()
+@property (retain, readwrite) NSBundle *bundle;
+@end
 
 @implementation SUHost
+@synthesize bundle;
 
 - (id)initWithBundle:(NSBundle *)aBundle
 {
 	if ((self = [super init]))
 	{
 		if (aBundle == nil) aBundle = [NSBundle mainBundle];
-        bundle = [aBundle retain];
+        self.bundle = aBundle;
 		if (![bundle bundleIdentifier])
 			SULog(@"Sparkle Error: the bundle being updated at %@ has no CFBundleIdentifier! This will cause preference read/write to not work properly.", bundle);
 
@@ -37,16 +41,11 @@
 - (void)dealloc
 {
 	[defaultsDomain release];
-	[bundle release];
+	self.bundle = nil;
 	[super dealloc];
 }
 
 - (NSString *)description { return [NSString stringWithFormat:@"%@ <%@, %@>", [self class], [self bundlePath], [self installationPath]]; }
-
-- (NSBundle *)bundle
-{
-    return bundle;
-}
 
 - (NSString *)bundlePath
 {
@@ -65,6 +64,7 @@
     else
         appSupportPath = [appSupportPaths objectAtIndex:0];
     appSupportPath = [appSupportPath stringByAppendingPathComponent:[self name]];
+    appSupportPath = [appSupportPath stringByAppendingPathComponent:@".Sparkle"];
     return appSupportPath;
 }
 
@@ -122,20 +122,15 @@
 	// Use a default icon if none is defined.
 	if (!icon) {
 		BOOL isMainBundle = (bundle == [NSBundle mainBundle]);
-		
-		// Starting with 10.6, iconForFileType: accepts a UTI.
-		NSString *fileType = nil;
-		if (floor(NSAppKitVersionNumber) <= NSAppKitVersionNumber10_5)
-			fileType = isMainBundle ? NSFileTypeForHFSTypeCode(kGenericApplicationIcon) : @".bundle";
-		else
-			fileType = isMainBundle ? (NSString*)kUTTypeApplication : (NSString*)kUTTypeBundle;
+
+		NSString *fileType = isMainBundle ? (NSString*)kUTTypeApplication : (NSString*)kUTTypeBundle;
 		icon = [[NSWorkspace sharedWorkspace] iconForFileType:fileType];
 	}
 	return icon;
 }
 
 - (BOOL)isRunningOnReadOnlyVolume
-{	
+{
 	struct statfs statfs_info;
 	statfs([[bundle bundlePath] fileSystemRepresentation], &statfs_info);
 	return (statfs_info.f_flags & MNT_RDONLY);
@@ -249,17 +244,15 @@
 	// There may be a better way to deal with the problem that gestaltSystemVersionMajor
 	//  et al. are not defined in 10.3, but this is probably good enough.
 	NSString* verStr = nil;
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_4
 	SInt32 major, minor, bugfix;
 	OSErr err1 = Gestalt(gestaltSystemVersionMajor, &major);
 	OSErr err2 = Gestalt(gestaltSystemVersionMinor, &minor);
 	OSErr err3 = Gestalt(gestaltSystemVersionBugFix, &bugfix);
 	if (!err1 && !err2 && !err3)
 	{
-		verStr = [NSString stringWithFormat:@"%ld.%ld.%ld", (long) major, (long) minor, (long) bugfix];
+		verStr = [NSString stringWithFormat:@"%ld.%ld.%ld", (long)major, (long)minor, (long)bugfix];
 	}
 	else
-#endif
 	{
 	 	NSString *versionPlistPath = @"/System/Library/CoreServices/SystemVersion.plist";
 		verStr = [[NSDictionary dictionaryWithContentsOfFile:versionPlistPath] objectForKey:@"ProductVersion"];

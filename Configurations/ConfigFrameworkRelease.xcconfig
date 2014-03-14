@@ -2,4 +2,5 @@
 #include "ConfigCommonRelease.xcconfig"
 #include "ConfigFramework.xcconfig"
 
-
+STRIP_INSTALLED_PRODUCT = YES
+DEPLOYMENT_POSTPROCESSING = YES
