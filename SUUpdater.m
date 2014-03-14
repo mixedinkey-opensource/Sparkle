@@ -150,7 +150,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
     else if ([delegate respondsToSelector:@selector(updaterShouldPromptForPermissionToCheckForUpdates:)])
     {
         shouldPrompt = [delegate updaterShouldPromptForPermissionToCheckForUpdates:self];
-    }	
+    }
     // Has he been asked already? And don't ask if the host has a default value set in its Info.plist.
     else if ([host objectForKey:SUEnableAutomaticChecksKey] == nil)
     {
@@ -173,12 +173,12 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
     {
 		NSArray *profileInfo = [host systemProfile];
 		// Always say we're sending the system profile here so that the delegate displays the parameters it would send.
-		if ([delegate respondsToSelector:@selector(feedParametersForUpdater:sendingSystemProfile:)]) 
+		if ([delegate respondsToSelector:@selector(feedParametersForUpdater:sendingSystemProfile:)])
 			profileInfo = [profileInfo arrayByAddingObjectsFromArray:[delegate feedParametersForUpdater:self sendingSystemProfile:YES]];
         [SUUpdatePermissionPrompt promptWithHost:host systemProfile:profileInfo delegate:self];
         // We start the update checks and register as observer for changes after the prompt finishes
 	}
-    else 
+    else
     {
         // We check if the user's said they want updates, or they haven't said anything, and the default is set to checking.
         [self scheduleNextUpdateCheck];
@@ -207,7 +207,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 }
 
 - (void)scheduleNextUpdateCheck
-{	
+{
 	if (checkTimer)
 	{
 		[checkTimer invalidate];
@@ -240,48 +240,48 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 -(void)	checkForUpdatesInBgReachabilityCheckWithDriver: (SUUpdateDriver*)inDriver /* RUNS ON ITS OWN THREAD */
 {
 	NS_DURING
-		// This method *must* be called on its own thread. SCNetworkReachabilityCheckByName
-		//	can block, and it can be waiting a long time on slow networks, and we
-		//	wouldn't want to beachball the main thread for a background operation.
-		// We could use asynchronous reachability callbacks, but those aren't
-		//	reliable enough and can 'get lost' sometimes, which we don't want.
+	// This method *must* be called on its own thread. SCNetworkReachabilityCheckByName
+	//	can block, and it can be waiting a long time on slow networks, and we
+	//	wouldn't want to beachball the main thread for a background operation.
+	// We could use asynchronous reachability callbacks, but those aren't
+	//	reliable enough and can 'get lost' sometimes, which we don't want.
+	
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	SCNetworkConnectionFlags flags = 0;
+	BOOL isNetworkReachable = YES;
+	
+	// Don't perform automatic checks on unconnected laptops or dial-up connections that aren't online:
+	NSMutableDictionary*		theDict = [NSMutableDictionary dictionary];
+	[self performSelectorOnMainThread: @selector(putFeedURLIntoDictionary:) withObject: theDict waitUntilDone: YES];	// Get feed URL on main thread, it's not safe to call elsewhere.
+	
+	const char *hostname = [[[theDict objectForKey: @"feedURL"] host] cStringUsingEncoding: NSUTF8StringEncoding];
+	SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(NULL, hostname);
+	Boolean reachabilityResult = NO;
+	// If the feed's using a file:// URL, we won't be able to use reachability.
+	if (reachability != NULL) {
+		SCNetworkReachabilityGetFlags(reachability, &flags);
+		CFRelease(reachability);
+	}
+	
+	if( reachabilityResult )
+	{
+		BOOL reachable =	(flags & kSCNetworkFlagsReachable)				== kSCNetworkFlagsReachable;
+		BOOL automatic =	(flags & kSCNetworkFlagsConnectionAutomatic)	== kSCNetworkFlagsConnectionAutomatic;
+		BOOL local =		(flags & kSCNetworkFlagsIsLocalAddress)			== kSCNetworkFlagsIsLocalAddress;
 		
-		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-		SCNetworkConnectionFlags flags = 0;
-		BOOL isNetworkReachable = YES;
+		//NSLog(@"reachable = %s, automatic = %s, local = %s", (reachable?"YES":"NO"), (automatic?"YES":"NO"), (local?"YES":"NO"));
 		
-		// Don't perform automatic checks on unconnected laptops or dial-up connections that aren't online:
-		NSMutableDictionary*		theDict = [NSMutableDictionary dictionary];
-		[self performSelectorOnMainThread: @selector(putFeedURLIntoDictionary:) withObject: theDict waitUntilDone: YES];	// Get feed URL on main thread, it's not safe to call elsewhere.
-		
-		const char *hostname = [[[theDict objectForKey: @"feedURL"] host] cStringUsingEncoding: NSUTF8StringEncoding];
-		SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(NULL, hostname);
-        Boolean reachabilityResult = NO;
-        // If the feed's using a file:// URL, we won't be able to use reachability.
-        if (reachability != NULL) {
-            SCNetworkReachabilityGetFlags(reachability, &flags);
-            CFRelease(reachability);
-        }
-		
-		if( reachabilityResult )
-		{
-			BOOL reachable =	(flags & kSCNetworkFlagsReachable)				== kSCNetworkFlagsReachable;
-			BOOL automatic =	(flags & kSCNetworkFlagsConnectionAutomatic)	== kSCNetworkFlagsConnectionAutomatic;
-			BOOL local =		(flags & kSCNetworkFlagsIsLocalAddress)			== kSCNetworkFlagsIsLocalAddress;
-			
-			//NSLog(@"reachable = %s, automatic = %s, local = %s", (reachable?"YES":"NO"), (automatic?"YES":"NO"), (local?"YES":"NO"));
-			
-			if( !(reachable || automatic || local) )
-				isNetworkReachable = NO;
-		}
-		
-        // If the network's not reachable, we pass a nil driver into checkForUpdatesWithDriver, which will then reschedule the next update so we try again later.    
-        [self performSelectorOnMainThread: @selector(checkForUpdatesWithDriver:) withObject: isNetworkReachable ? inDriver : nil waitUntilDone: NO];
-		
-		[pool release];
+		if( !(reachable || automatic || local) )
+			isNetworkReachable = NO;
+	}
+	
+	// If the network's not reachable, we pass a nil driver into checkForUpdatesWithDriver, which will then reschedule the next update so we try again later.
+	[self performSelectorOnMainThread: @selector(checkForUpdatesWithDriver:) withObject: isNetworkReachable ? inDriver : nil waitUntilDone: NO];
+	
+	[pool release];
 	NS_HANDLER
-		SULog(@"UNCAUGHT EXCEPTION IN UPDATE CHECK TIMER: %@",[localException reason]);
-		// Don't propagate the exception beyond here. In Carbon apps that would trash the stack.
+	SULog(@"UNCAUGHT EXCEPTION IN UPDATE CHECK TIMER: %@",[localException reason]);
+	// Don't propagate the exception beyond here. In Carbon apps that would trash the stack.
 	NS_ENDHANDLER
 }
 
@@ -291,7 +291,15 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	// Background update checks should only happen if we have a network connection.
 	//	Wouldn't want to annoy users on dial-up by establishing a connection every
 	//	hour or so:
-	SUUpdateDriver *	theUpdateDriver = [[[([self automaticallyDownloadsUpdates] ? [SUAutomaticUpdateDriver class] : [SUScheduledUpdateDriver class]) alloc] initWithUpdater:self] autorelease];
+	SUUpdateDriver *theUpdateDriver = nil;
+	if ([self.delegate respondsToSelector:@selector(updateDriverForUpdater:)]) {
+		theUpdateDriver = [self.delegate updateDriverForUpdater:self];
+	}
+	
+	if (!theUpdateDriver) {
+		// Didn't get a custom update driver from the delegate
+		theUpdateDriver = [[[([self automaticallyDownloadsUpdates] ? [SUAutomaticUpdateDriver class] : [SUScheduledUpdateDriver class]) alloc] initWithUpdater:self] autorelease];
+	}
 	
 	[NSThread detachNewThreadSelector: @selector(checkForUpdatesInBgReachabilityCheckWithDriver:) toTarget: self withObject: theUpdateDriver];
 }
@@ -322,7 +330,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	
 	SUClearLog();
 	SULog( @"===== %@ =====", [[NSFileManager defaultManager] displayNameAtPath: [[NSBundle mainBundle] bundlePath]] );
-		
+	
 	[self willChangeValueForKey:@"lastUpdateCheckDate"];
 	[host setObject:[NSDate date] forUserDefaultsKey:SULastCheckTimeKey];
 	[self didChangeValueForKey:@"lastUpdateCheckDate"];
@@ -332,7 +340,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 		[self scheduleNextUpdateCheck];
 		return;
 	}
-    	
+	
     driver = [d retain];
     
     // If we're not given a driver at all, just schedule the next update check and bail.
@@ -407,7 +415,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 {
 	// Don't automatically update when the check interval is 0, to be compatible with 1.1 settings.
     if ([self updateCheckInterval] == 0)
-        return NO;	
+        return NO;
 	return [host boolForKey:SUEnableAutomaticChecksKey];
 }
 
@@ -451,7 +459,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 {
 	if (customUserAgentString == userAgent)
 		return;
-
+	
 	[customUserAgentString release];
 	customUserAgentString = [userAgent copy];
 }
@@ -460,7 +468,7 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 {
 	if (customUserAgentString)
 		return customUserAgentString;
-
+	
 	NSString *version = [SPARKLE_BUNDLE objectForInfoDictionaryKey:@"CFBundleVersion"];
 	NSString *userAgent = [NSString stringWithFormat:@"%@/%@ Sparkle/%@", [host name], [host displayVersion], version ? version : @"?"];
 	NSData *cleanedAgent = [userAgent dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
@@ -483,14 +491,14 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	
 	// Determine all the parameters we're attaching to the base feed URL.
 	BOOL sendingSystemProfile = [self sendsSystemProfile];
-
+	
 	// Let's only send the system profiling information once per week at most, so we normalize daily-checkers vs. biweekly-checkers and the such.
 	NSDate *lastSubmitDate = [host objectForUserDefaultsKey:SULastProfileSubmitDateKey];
 	if(!lastSubmitDate)
 	    lastSubmitDate = [NSDate distantPast];
 	const NSTimeInterval oneWeek = 60 * 60 * 24 * 7;
 	sendingSystemProfile &= (-[lastSubmitDate timeIntervalSinceNow] >= oneWeek);
-
+	
 	NSArray *parameters = [NSArray array];
 	if ([delegate respondsToSelector:@selector(feedParametersForUpdater:sendingSystemProfile:)])
 		parameters = [parameters arrayByAddingObjectsFromArray:[delegate feedParametersForUpdater:self sendingSystemProfile:sendingSystemProfile]];

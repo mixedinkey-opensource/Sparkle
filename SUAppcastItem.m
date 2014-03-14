@@ -43,6 +43,18 @@
 @synthesize title;
 @synthesize versionString;
 
+static BOOL _escapesDownloadURLs = YES;
+
++ (BOOL)escapesDownloadURLs;
+{
+	return _escapesDownloadURLs;
+}
+
++ (void)setEscapesDownloadURLs:(BOOL)flag;
+{
+	_escapesDownloadURLs = flag;
+}
+
 - (BOOL)isDeltaUpdate
 {
 	return [[propertiesDictionary objectForKey:@"enclosure"] objectForKey:@"sparkle:deltaFrom"] != nil;
@@ -127,8 +139,10 @@
 		}
 		
 		if( enclosureURLString ) {
-			NSString *fileURLString = [[enclosureURLString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-			self.fileURL = [NSURL URLWithString:fileURLString];
+			if ([[self class] escapesDownloadURLs]) {
+				enclosureURLString = [[enclosureURLString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+			}
+			self.fileURL = [NSURL URLWithString:enclosureURLString];
 		}
 		if( enclosure )
 			self.DSASignature = [enclosure objectForKey:@"sparkle:dsaSignature"];
