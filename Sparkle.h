@@ -14,6 +14,9 @@
 
 #import <Sparkle/SUUpdater.h>
 
+#import <Sparkle/SUUpdateDriver.h>
+#import <Sparkle/SUBasicUpdateDriver.h>
+
 #import <Sparkle/SUAppcast.h>
 #import <Sparkle/SUAppcastItem.h>
 #import <Sparkle/SUVersionComparisonProtocol.h>

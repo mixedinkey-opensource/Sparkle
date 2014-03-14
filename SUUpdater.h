@@ -134,6 +134,9 @@ extern NSString *const SUUpdaterAppcastNotificationKey;
 // Called immediately before relaunching.
 - (void)updaterWillRelaunchApplication:(SUUpdater *)updater;
 
+// This method allows you to provide a custom update driver (added by ARM for MIK on 06/06/13)
+- (SUUpdateDriver *)updateDriverForUpdater:(SUUpdater *)updater;
+
 // This method allows you to provide a custom version comparator.
 // If you don't implement this method or return nil, the standard version comparator will be used.
 - (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater *)updater;

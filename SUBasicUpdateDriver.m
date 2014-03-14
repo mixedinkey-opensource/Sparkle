@@ -20,6 +20,7 @@
 #import "SUBinaryDeltaCommon.h"
 #import "SUCodeSigningVerifier.h"
 #import "SUUpdater_Private.h"
+#import "SUXPC.h"
 
 #ifdef FINISH_INSTALL_TOOL_NAME
     // FINISH_INSTALL_TOOL_NAME expands to unquoted finish_install
@@ -317,6 +318,10 @@
         return;
     }
     
+	BOOL running10_7 = floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6;
+	BOOL useXPC = running10_7 && [[NSFileManager defaultManager] fileExistsAtPath:
+								  [[host bundlePath] stringByAppendingPathComponent:@"Contents/XPCServices/com.andymatuschak.Sparkle.SandboxService.xpc"]];
+    
     // Give the host app an opportunity to postpone the install and relaunch.
     static BOOL postponedOnce = NO;
     if (!postponedOnce && [[updater delegate] respondsToSelector:@selector(updater:shouldPostponeRelaunchForUpdate:untilInvoking:)])
@@ -346,7 +351,13 @@
 		NSError *error = nil;
 		[[NSFileManager defaultManager] createDirectoryAtPath: [targetPath stringByDeletingLastPathComponent] withIntermediateDirectories: YES attributes: [NSDictionary dictionary] error: &error];
 
-		if( [SUPlainInstaller copyPathWithAuthentication: relaunchPathToCopy overPath: targetPath temporaryName: nil error: &error] )
+	// Only the paranoid survive: if there's already a stray copy of relaunch there, we would have problems.
+	BOOL copiedRelaunchTool = FALSE;
+	if( useXPC )
+		copiedRelaunchTool = [SUXPC copyPathWithAuthentication: relaunchPathToCopy overPath: targetPath temporaryName: nil error: &error];
+	else
+		copiedRelaunchTool = [SUPlainInstaller copyPathWithAuthentication: relaunchPathToCopy overPath: targetPath temporaryName: nil error: &error];
+	if( copiedRelaunchTool )
 			relaunchPath = [targetPath retain];
 		else
 			[self abortUpdateWithError:[NSError errorWithDomain:SUSparkleErrorDomain code:SURelaunchError userInfo:[NSDictionary dictionaryWithObjectsAndKeys:SULocalizedString(@"An error occurred while extracting the archive. Please try again later.", nil), NSLocalizedDescriptionKey, [NSString stringWithFormat:@"Couldn't copy relauncher (%@) to temporary path (%@)! %@", relaunchPathToCopy, targetPath, (error ? [error localizedDescription] : @"")], NSLocalizedFailureReasonErrorKey, nil]]];
@@ -368,14 +379,11 @@
     if ([[updater delegate] respondsToSelector:@selector(pathToRelaunchForUpdater:)])
         pathToRelaunch = [[updater delegate] pathToRelaunchForUpdater:updater];
     NSString *relaunchToolPath = [[relaunchPath stringByAppendingPathComponent: @"/Contents/MacOS"] stringByAppendingPathComponent: finishInstallToolName];
-    [NSTask launchedTaskWithLaunchPath: relaunchToolPath arguments:[NSArray arrayWithObjects:
-																	[host bundlePath],
-																	pathToRelaunch,
-																	[NSString stringWithFormat:@"%d", [[NSProcessInfo processInfo] processIdentifier]],
-																	tempDir,
-																	relaunch ? @"1" : @"0",
-																	showUI ? @"1" : @"0",
-																	nil]];
+	NSArray *arguments = [NSArray arrayWithObjects:[host bundlePath], pathToRelaunch, [NSString stringWithFormat:@"%d", [[NSProcessInfo processInfo] processIdentifier]], tempDir, relaunch ? @"1" : @"0", showUI ? @"1" : @"0", nil];
+	if( useXPC )
+		[SUXPC launchTaskWithLaunchPath: relaunchToolPath arguments:arguments];
+	else
+		[NSTask launchedTaskWithLaunchPath: relaunchToolPath arguments:arguments];
 
     [NSApp terminate:self];
 }

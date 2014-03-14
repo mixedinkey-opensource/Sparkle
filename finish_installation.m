@@ -119,8 +119,10 @@
         if( !folderpath || strcmp(executablepath, hostpath) != 0 )
             appPath = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:executablepath length:strlen(executablepath)];
         else
-            appPath = installationPath;
-        [[NSWorkspace sharedWorkspace] openFile: appPath];
+            appPath = [host installationPath];
+        
+        NSRunningApplication *relaunchedApplication = [[NSWorkspace sharedWorkspace] launchApplicationAtURL:[NSURL fileURLWithPath:appPath] options:NSWorkspaceLaunchDefault configuration:nil error:NULL];
+        [relaunchedApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     }
 
     if (folderpath)

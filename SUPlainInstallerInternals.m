@@ -511,7 +511,10 @@ static BOOL AuthorizationExecuteWithPrivilegesAndWait(AuthorizationRef authoriza
 	// new home in case it's moved across filesystems: if that
 	// happens, the move is actually a copy, and it may result
 	// in the application being quarantined.
+	if ([NSThread isMultiThreaded] == YES && [NSThread isMainThread] == NO)
 	[self performSelectorOnMainThread:@selector(releaseFromQuarantine:) withObject:dst waitUntilDone:YES];
+	else
+		[self releaseFromQuarantine:dst];
 	
 	return YES;
 }
