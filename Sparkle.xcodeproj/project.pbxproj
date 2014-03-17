@@ -27,7 +27,6 @@
 		55C14F24136EF86F00649790 /* SUPackageInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 618FA5210DAE8E8A0026945C /* SUPackageInstaller.m */; };
 		55C14F2A136EF9A900649790 /* SUWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 61180BC90D64138900B4E0D1 /* SUWindowController.m */; };
 		55C14F32136EFC2400649790 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55C14F31136EFC2400649790 /* SystemConfiguration.framework */; };
-		55C14F3B136EFCB300649790 /* Autoupdate.app in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BB7136EEF1500649790 /* Autoupdate.app */; };
 		55C14F7E136F005000649790 /* SUPlainInstallerInternals.m in Sources */ = {isa = PBXBuildFile; fileRef = 61B5F8E509C4CE3C00B25A18 /* SUPlainInstallerInternals.m */; };
 		55C14F9A136F045400649790 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61B5F8F609C4CEB300B25A18 /* Security.framework */; };
 		5D06E8D80FD68C8E005AE3F6 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DC2EF5B0486A6940098B216 /* Sparkle.framework */; };
@@ -142,16 +141,17 @@
 		93FB277B156BD80D001937C7 /* SUPasswordPrompt.m in Sources */ = {isa = PBXBuildFile; fileRef = 93FB2779156BD80D001937C7 /* SUPasswordPrompt.m */; };
 		94059A911648D5880094BDCF /* SUModelTranslation.plist in Resources */ = {isa = PBXBuildFile; fileRef = 615AE3CF0D64DC40001CA7BD /* SUModelTranslation.plist */; };
 		94059A921648D5880094BDCF /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = 61C268090E2DB5D000175E6C /* License.txt */; };
-		94059A931648D5880094BDCF /* Sparkle.strings in Resources */ = {isa = PBXBuildFile; fileRef = 946D995E1648708C00145DA7 /* Sparkle.strings */; };
 		94059A941648D5880094BDCF /* SUUpdatePermissionPrompt.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C14C05136EF2C700649790 /* SUUpdatePermissionPrompt.xib */; };
 		94059A951648D5880094BDCF /* SUUpdateAlert.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BF0136EF26100649790 /* SUUpdateAlert.xib */; };
 		94059A961648D5880094BDCF /* SUAutomaticUpdateAlert.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BDA136EF20D00649790 /* SUAutomaticUpdateAlert.xib */; };
 		94059A971648D5880094BDCF /* SUStatus.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BD8136EF00C00649790 /* SUStatus.xib */; };
 		94059A981648D5880094BDCF /* SUPasswordPrompt.xib in Resources */ = {isa = PBXBuildFile; fileRef = 93FB277D156BD826001937C7 /* SUPasswordPrompt.xib */; };
-		94059A991648D58D0094BDCF /* Autoupdate.app in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BB7136EEF1500649790 /* Autoupdate.app */; };
 		94059A9B1648D5A70094BDCF /* SUStatus.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BD8136EF00C00649790 /* SUStatus.xib */; };
 		94059A9C1648D5AA0094BDCF /* Sparkle.strings in Resources */ = {isa = PBXBuildFile; fileRef = 946D995E1648708C00145DA7 /* Sparkle.strings */; };
 		94059A9D1648D5AC0094BDCF /* Sparkle.icns in Resources */ = {isa = PBXBuildFile; fileRef = 550347001370023A00AE7681 /* Sparkle.icns */; };
+		9D83DA4818D77770003732B1 /* Sparkle.strings in Resources */ = {isa = PBXBuildFile; fileRef = 61AAE8220A321A7F00D8810D /* Sparkle.strings */; };
+		9D83DA4918D77792003732B1 /* Autoupdate.app in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BB7136EEF1500649790 /* Autoupdate.app */; };
+		9D83DA4A18D77824003732B1 /* Autoupdate.app in Resources */ = {isa = PBXBuildFile; fileRef = 55C14BB7136EEF1500649790 /* Autoupdate.app */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -189,6 +189,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 8B887B5D1517F3AB000BB292;
 			remoteInfo = Service;
+		};
+		9D83DA4B18D7782C003732B1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0867D690FE84028FC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55C14BB6136EEF1500649790;
+			remoteInfo = finish_installation;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -1023,6 +1030,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				9D83DA4C18D7782C003732B1 /* PBXTargetDependency */,
 			);
 			name = sandbox_service;
 			productName = Update;
@@ -1157,7 +1165,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				55C14F3B136EFCB300649790 /* Autoupdate.app in Resources */,
+				9D83DA4A18D77824003732B1 /* Autoupdate.app in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1165,15 +1173,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				94059A991648D58D0094BDCF /* Autoupdate.app in Resources */,
+				9D83DA4818D77770003732B1 /* Sparkle.strings in Resources */,
 				94059A911648D5880094BDCF /* SUModelTranslation.plist in Resources */,
 				94059A921648D5880094BDCF /* License.txt in Resources */,
-				94059A931648D5880094BDCF /* Sparkle.strings in Resources */,
 				94059A941648D5880094BDCF /* SUUpdatePermissionPrompt.xib in Resources */,
 				94059A951648D5880094BDCF /* SUUpdateAlert.xib in Resources */,
 				94059A961648D5880094BDCF /* SUAutomaticUpdateAlert.xib in Resources */,
 				94059A971648D5880094BDCF /* SUStatus.xib in Resources */,
 				94059A981648D5880094BDCF /* SUPasswordPrompt.xib in Resources */,
+				9D83DA4918D77792003732B1 /* Autoupdate.app in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1408,6 +1416,11 @@
 			isa = PBXTargetDependency;
 			target = 8B887B5D1517F3AB000BB292 /* sandbox_service */;
 			targetProxy = 8B887B731517F472000BB292 /* PBXContainerItemProxy */;
+		};
+		9D83DA4C18D7782C003732B1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55C14BB6136EEF1500649790 /* finish_installation */;
+			targetProxy = 9D83DA4B18D7782C003732B1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1686,7 +1699,6 @@
 					"-framework",
 					AppKit,
 				);
-				PRODUCT_NAME = finish_installation;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -1753,7 +1765,6 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INFOPLIST_FILE = SandboxService.plist;
 				OTHER_CFLAGS = "-DDEBUG";
-				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
@@ -1764,7 +1775,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INFOPLIST_FILE = SandboxService.plist;
-				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};
