@@ -291,6 +291,10 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
 	// Background update checks should only happen if we have a network connection.
 	//	Wouldn't want to annoy users on dial-up by establishing a connection every
 	//	hour or so:
+	if ([self.delegate respondsToSelector:@selector(updaterMayCheckForUpdates:)]) {
+		if (![self.delegate updaterMayCheckForUpdates:self]) return;
+	}
+	
 	SUUpdateDriver *theUpdateDriver = nil;
 	if ([self.delegate respondsToSelector:@selector(updateDriverForUpdater:)]) {
 		theUpdateDriver = [self.delegate updateDriverForUpdater:self];
