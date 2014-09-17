@@ -21,4 +21,6 @@
 #import <Sparkle/SUAppcastItem.h>
 #import <Sparkle/SUVersionComparisonProtocol.h>
 
+#import <Sparkle/SUConstants.h>
+
 #endif
