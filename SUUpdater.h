@@ -158,6 +158,9 @@ extern NSString *const SUUpdaterAppcastNotificationKey;
 - (void)updater:(SUUpdater *)updater willInstallUpdateOnQuit:(SUAppcastItem *)update immediateInstallationInvocation:(NSInvocation *)invocation;
 - (void)updater:(SUUpdater *)updater didCancelInstallUpdateOnQuit:(SUAppcastItem *)update;
 
+// Called when the updater (or its driver) encounters an error
+- (void)updater:(SUUpdater *)updater didEncounterError:(NSError *)error;
+
 @end
 
 
