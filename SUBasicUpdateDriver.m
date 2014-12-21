@@ -133,7 +133,14 @@
 	else // If not, we'll take care of it ourselves.
 	{
 		// Find the first update we can actually use.
-		NSEnumerator *updateEnumerator = [[ac items] objectEnumerator];
+		NSArray *items = [ac items];
+		
+		SUStandardVersionComparator *versionComparator = [SUStandardVersionComparator defaultComparator];
+		items = [items sortedArrayUsingComparator:^NSComparisonResult(SUAppcastItem *item1, SUAppcastItem *item2) {
+			return [versionComparator compareVersion:item2.versionString toVersion:item1.versionString];
+		}];
+		
+		NSEnumerator *updateEnumerator = [items objectEnumerator];
 		do {
 			item = [updateEnumerator nextObject];
 		} while (item && ![self hostSupportsItem:item]);
