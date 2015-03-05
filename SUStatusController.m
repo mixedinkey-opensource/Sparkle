@@ -82,7 +82,7 @@
 {
 	self.buttonTitle = aButtonTitle;
 	
-	[self window];
+	[[self window] self];
 	[actionButton sizeToFit];
 	// Except we're going to add 15 px for padding.
 	[actionButton setFrameSize:NSMakeSize([actionButton frame].size.width + 15, [actionButton frame].size.height)];
