@@ -326,8 +326,14 @@
 	}
 	
 	BOOL running10_7 = floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6;
-	BOOL useXPC = running10_7 && [[NSFileManager defaultManager] fileExistsAtPath:
-								  [[host bundlePath] stringByAppendingPathComponent:@"Contents/XPCServices/com.andymatuschak.Sparkle.SandboxService.xpc"]];
+	
+	//	[MIK:Patrick Machielse] check for xpc service bundled with the host OR with MIKUpdate
+	//	code is a bit clumsy, as 'bundles' may use different paths during debugging?
+	//
+	NSFileManager *fman = [NSFileManager defaultManager];
+	BOOL hostXPC = [fman fileExistsAtPath:[[host bundlePath] stringByAppendingPathComponent:@"Contents/XPCServices/com.andymatuschak.Sparkle.SandboxService.xpc"]];
+	BOOL updateXPC = [fman fileExistsAtPath:[[host bundlePath] stringByAppendingPathComponent:@"Contents/Frameworks/MIKUpdate.framework/XPCServices/com.andymatuschak.Sparkle.SandboxService.xpc"]];
+	BOOL useXPC = running10_7 && (hostXPC || updateXPC);
 	
 	// Give the host app an opportunity to postpone the install and relaunch.
 	static BOOL postponedOnce = NO;
