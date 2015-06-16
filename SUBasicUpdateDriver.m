@@ -435,13 +435,13 @@
 		SULog(@"Sparkle Error: %@", [error localizedDescription]);
 	if ([error localizedFailureReason])
 		SULog(@"Sparkle Error (continued): %@", [error localizedFailureReason]);
-	if (download)
-		[download cancel];
-	[self abortUpdate];
+	[download cancel];
 	
 	if ([[updater delegate] respondsToSelector:@selector(updater:didEncounterError:)]) {
 		[[updater delegate] updater:updater didEncounterError:error];
 	}
+	
+	[self abortUpdate];
 }
 
 - (void)dealloc
