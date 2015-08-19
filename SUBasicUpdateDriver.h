@@ -57,6 +57,8 @@
 - (void)abortUpdate;
 - (void)abortUpdateWithError:(NSError *)error;
 
+@property (nonatomic, retain) SUUnarchiver *unarchiver;
+
 @end
 
 #endif

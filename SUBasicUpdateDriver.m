@@ -34,7 +34,6 @@
 
 @interface SUBasicUpdateDriver () <NSURLDownloadDelegate>
 @property (nonatomic, retain) SUAppcast *appcast;
-@property (nonatomic, retain) SUUnarchiver *unarchiver;
 @end
 
 
@@ -253,7 +252,8 @@
 
 - (void)extractUpdate
 {
-	SUUnarchiver *unarchiver = [SUUnarchiver unarchiverForPath:downloadPath updatingHost:host];
+	self.unarchiver = [SUUnarchiver unarchiverForPath:downloadPath updatingHost:host];
+	SUUnarchiver *unarchiver = self.unarchiver;
 	if (!unarchiver)
 	{
 		SULog(@"Sparkle Error: No valid unarchiver for %@!", downloadPath);
