@@ -34,6 +34,7 @@
 
 @interface SUBasicUpdateDriver () <NSURLDownloadDelegate>
 @property (nonatomic, retain) SUAppcast *appcast;
+@property (nonatomic, retain) SUUnarchiver *unarchiver;
 @end
 
 
@@ -48,12 +49,9 @@
 		return;
 	}
 	
-	SUAppcast *appcast = [[SUAppcast alloc] init];
-	self.appcast = appcast;
-	CFRetain(appcast); // We'll manage the appcast's memory ourselves so we don't have to make it an IV to support GC.
-	[appcast release];
+	self.appcast = [[[SUAppcast alloc] init] autorelease];
+	SUAppcast *appcast = self.appcast;
 	
-	[appcast setDelegate:self];
 	[appcast setUserAgentString:[updater userAgentString]];
 	[appcast fetchAppcastFromURL:URL];
 }
@@ -149,22 +147,19 @@
 	}
 	
 	updateItem = [item retain];
-	if (ac) { CFRelease(ac); } // Remember that we're explicitly managing the memory of the appcast.
+	self.appcast = nil;
 	if (updateItem == nil) { [self didNotFindUpdate]; return; }
 	
 	if ([self itemContainsValidUpdate:updateItem])
 		[self didFindValidUpdate];
 	else
 		[self didNotFindUpdate];
-
-	self.appcast = nil;
 }
 
 - (void)appcast:(SUAppcast *)ac failedToLoadWithError:(NSError *)error
 {
-	if (ac) { CFRelease(ac); } // Remember that we're explicitly managing the memory of the appcast.
-	[self abortUpdateWithError:error];
 	self.appcast = nil;
+	[self abortUpdateWithError:error];
 }
 
 - (void)didFindValidUpdate
@@ -265,8 +260,6 @@
 		[self unarchiverDidFail:nil];
 		return;
 	}
-	CFRetain(unarchiver); // Manage this memory manually so we don't have to make it an IV.
-	[unarchiver setDelegate:self];
 	[unarchiver start];
 }
 
@@ -282,13 +275,13 @@
 
 - (void)unarchiverDidFinish:(SUUnarchiver *)ua
 {
-	if (ua) { CFRelease(ua); }
+	self.unarchiver = nil;
 	[self installWithToolAndRelaunch:YES];
 }
 
 - (void)unarchiverDidFail:(SUUnarchiver *)ua
 {
-	if (ua) { CFRelease(ua); }
+	self.unarchiver = nil;
 	
 	if ([updateItem isDeltaUpdate]) {
 		[self failedToApplyDeltaUpdate];
@@ -420,8 +413,8 @@
 
 - (void)abortUpdate
 {
-	[self.appcast abortFetch];
 	self.appcast = nil;
+	self.unarchiver = nil;
 
 	[[self retain] autorelease];	// In case the notification center was the last one holding on to us.
 	[self cleanUpDownload];
@@ -447,14 +440,34 @@
 - (void)setAppcast:(SUAppcast *)appcast
 {
 	if (_appcast != appcast) {
+		if (_appcast.delegate == self) _appcast.delegate = nil;
+
 		[_appcast release];
 		_appcast = appcast;
 		[_appcast retain];
+
+		_appcast.delegate = self;
+	}
+}
+
+- (void)setUnarchiver:(SUUnarchiver *)unarchiver
+{
+	if (_unarchiver != unarchiver) {
+		if (_unarchiver.delegate == self) _unarchiver.delegate = nil;
+
+		[_unarchiver release];
+		_unarchiver = unarchiver;
+		[_unarchiver retain];
+
+		_unarchiver.delegate = self;
 	}
 }
 
 - (void)dealloc
 {
+	self.appcast = nil;
+	self.unarchiver = nil;
+
 	[updateItem release];
 	[nonDeltaUpdateItem release];
 	[download release];

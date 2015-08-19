@@ -57,13 +57,6 @@
 	[super dealloc];
 }
 
-- (void)abortFetch
-{
-	NSURLDownload *theDownload = self.download;
-	self.download = nil;
-	[theDownload cancel];
-}
-
 - (void)fetchAppcastFromURL:(NSURL *)url
 {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:30.0];
@@ -75,7 +68,6 @@
 
 - (void)download:(NSURLDownload *)aDownload decideDestinationWithSuggestedFilename:(NSString *)filename
 {
-	if (download != self.download) return;
 	NSString* destinationFilename = NSTemporaryDirectory();
 	if (destinationFilename)
 	{
@@ -86,14 +78,11 @@
 
 - (void)download:(NSURLDownload *)aDownload didCreateDestination:(NSString *)path
 {
-	if (download != self.download) return;
     self.downloadFilename = path;
 }
 
 - (void)downloadDidFinish:(NSURLDownload *)aDownload
-{
-	if (download != self.download) return;
-
+{    
 	NSError *error = nil;
 	
 	NSXMLDocument *document = nil;
@@ -236,7 +225,6 @@
 
 - (void)download:(NSURLDownload *)aDownload didFailWithError:(NSError *)error
 {
-	if (download != self.download) return;
 	if (downloadFilename)
 	{
 		[[NSFileManager defaultManager] removeItemAtPath:downloadFilename error:nil];

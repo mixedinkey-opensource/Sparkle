@@ -26,8 +26,6 @@
 
 - (void)fetchAppcastFromURL:(NSURL *)url;
 
-- (void)abortFetch;
-
 - (NSArray *)items;
 @end
 
