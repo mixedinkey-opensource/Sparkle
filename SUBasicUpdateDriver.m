@@ -31,16 +31,9 @@
 #error FINISH_INSTALL_TOOL_NAME not defined
 #endif
 
-@interface SUBasicUpdateDriver () <NSURLDownloadDelegate>; @end
-
 
 @interface SUBasicUpdateDriver () <NSURLDownloadDelegate>
-
-@end
-
-
-@interface SUBasicUpdateDriver () <NSURLDownloadDelegate>
-
+@property (nonatomic, retain) SUAppcast *appcast;
 @end
 
 
@@ -56,6 +49,7 @@
 	}
 	
 	SUAppcast *appcast = [[SUAppcast alloc] init];
+	self.appcast = appcast;
 	CFRetain(appcast); // We'll manage the appcast's memory ourselves so we don't have to make it an IV to support GC.
 	[appcast release];
 	
@@ -162,12 +156,15 @@
 		[self didFindValidUpdate];
 	else
 		[self didNotFindUpdate];
+
+	self.appcast = nil;
 }
 
 - (void)appcast:(SUAppcast *)ac failedToLoadWithError:(NSError *)error
 {
 	if (ac) { CFRelease(ac); } // Remember that we're explicitly managing the memory of the appcast.
 	[self abortUpdateWithError:error];
+	self.appcast = nil;
 }
 
 - (void)didFindValidUpdate
@@ -423,6 +420,9 @@
 
 - (void)abortUpdate
 {
+	[self.appcast abortFetch];
+	self.appcast = nil;
+
 	[[self retain] autorelease];	// In case the notification center was the last one holding on to us.
 	[self cleanUpDownload];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -442,6 +442,15 @@
 	}
 	
 	[self abortUpdate];
+}
+
+- (void)setAppcast:(SUAppcast *)appcast
+{
+	if (_appcast != appcast) {
+		[_appcast release];
+		_appcast = appcast;
+		[_appcast retain];
+	}
 }
 
 - (void)dealloc
