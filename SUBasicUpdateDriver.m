@@ -437,18 +437,21 @@
 	[self abortUpdate];
 }
 
+@synthesize appcast = _appcast;
+
 - (void)setAppcast:(SUAppcast *)appcast
 {
 	if (_appcast != appcast) {
 		if (_appcast.delegate == self) _appcast.delegate = nil;
 
 		[_appcast release];
-		_appcast = appcast;
-		[_appcast retain];
+		_appcast = [appcast retain];
 
 		_appcast.delegate = self;
 	}
 }
+
+@synthesize unarchiver = _unarchiver;
 
 - (void)setUnarchiver:(SUUnarchiver *)unarchiver
 {
@@ -456,8 +459,7 @@
 		if (_unarchiver.delegate == self) _unarchiver.delegate = nil;
 
 		[_unarchiver release];
-		_unarchiver = unarchiver;
-		[_unarchiver retain];
+		_unarchiver = [unarchiver retain];
 
 		_unarchiver.delegate = self;
 	}

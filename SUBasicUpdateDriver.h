@@ -24,6 +24,9 @@
 	NSString *tempDir;
 	
 	NSString *relaunchPath;
+    
+    SUAppcast *_appcast;
+    SUUnarchiver *_unarchiver;
 }
 
 - (void)checkForUpdatesAtURL:(NSURL *)URL host:(SUHost *)host;
