@@ -15,6 +15,8 @@ NSString * const SUUpdateDriverFinishedNotification = @"SUUpdateDriverFinished";
 
 @synthesize host;
 
+- (SUUpdater *)updater { return [[updater retain] autorelease]; }
+
 - initWithUpdater:(SUUpdater *)anUpdater
 {
 	if ((self = [super init]))
