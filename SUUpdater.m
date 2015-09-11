@@ -403,6 +403,8 @@ static NSString * const SUUpdaterDefaultsObservationContext = @"SUUpdaterDefault
     [self scheduleNextUpdateCheck];
 }
 
+- (SUUpdateDriver *)updateDriver { return [[driver retain] autorelease]; }
+
 - (void)setAutomaticallyChecksForUpdates:(BOOL)automaticallyCheckForUpdates
 {
 	[host setBool:automaticallyCheckForUpdates forUserDefaultsKey:SUEnableAutomaticChecksKey];

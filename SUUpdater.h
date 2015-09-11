@@ -32,6 +32,8 @@
 
 - (NSBundle *)hostBundle;
 
+- (SUUpdateDriver *)updateDriver;
+
 - (void)setAutomaticallyChecksForUpdates:(BOOL)automaticallyChecks;
 - (BOOL)automaticallyChecksForUpdates;
 
