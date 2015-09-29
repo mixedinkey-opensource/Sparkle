@@ -24,6 +24,15 @@
 
 @end
 
+// WebKit protocols are not explicitly declared until 10.11 SDK, so
+// declare dummy protocols to keep the build working on earlier SDKs.
+#if !defined(MAC_OS_X_VERSION_10_11)
+@protocol WebFrameLoadDelegate
+@end
+@protocol WebPolicyDelegate
+@end
+#endif
+
 @interface SUUpdateAlert () <WebPolicyDelegate, WebFrameLoadDelegate>
 
 @end
