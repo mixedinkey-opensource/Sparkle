@@ -98,7 +98,7 @@
             options = NSXMLDocumentTidyXML;
         } else {
             // In 10.7 and later, there's a real option for the behavior we desire.
-            options = NSXMLNodeLoadExternalEntitiesSameOriginOnly;
+            options = NSXMLNodeLoadExternalEntitiesNever; // Prevent inclusion from file://
         }
 		document = [[[NSXMLDocument alloc] initWithContentsOfURL:[NSURL fileURLWithPath:downloadFilename] options:options error:&error] autorelease];
 	
