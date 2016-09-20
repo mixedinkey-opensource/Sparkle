@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 
 extern int xar_close(void*) __attribute__((weak_import));
+NSString *stringWithFileSystemRepresentation(const char *input);
     
 int binaryDeltaSupported(void)
 {
@@ -39,12 +40,29 @@ NSString *pathRelativeToDirectory(NSString *directory, NSString *path)
     return path;
 }
 
+NSString *stringWithFileSystemRepresentation(const char *input) {
+	return [[NSFileManager defaultManager] stringWithFileSystemRepresentation:input length:strlen(input)];
+}
+
 NSString *temporaryFilename(NSString *base)
 {
     NSString *template = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.XXXXXXXXXX", base]];
-    char buffer[MAXPATHLEN];
-    strcpy(buffer, [template fileSystemRepresentation]);
-    return [NSString stringWithUTF8String:mkstemp(buffer)];
+    NSMutableData *data = [NSMutableData data];
+    [data appendBytes:template.fileSystemRepresentation length:strlen(template.fileSystemRepresentation) + 1];
+
+    char *buffer = data.mutableBytes;
+    int fd = mkstemp(buffer);
+    if (fd == -1) {
+        perror("mkstemp");
+        return nil;
+    }
+
+    if (close(fd) != 0) {
+        perror("close");
+        return nil;
+    }
+
+    return stringWithFileSystemRepresentation(buffer);
 }
 
 static void _hashOfBuffer(unsigned char *hash, const char* buffer, size_t bufferLength)
