@@ -181,6 +181,15 @@
 
 - (void)downloadUpdate
 {
+    // CLF: Clean up old downloads first to mitigate this issue: https://github.com/sparkle-project/Sparkle/issues/750
+    NSString *oldFilesPath = [host appSupportPath];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:oldFilesPath]) {
+        NSError *error;
+        if (![[NSFileManager defaultManager] removeItemAtPath:oldFilesPath error:&error]) {
+            NSLog(@"Error removing old .Sparkle directory: %@", error);
+        }
+    }
+    
 	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[updateItem fileURL]];
 	[request setValue:[updater userAgentString] forHTTPHeaderField:@"User-Agent"];
 	download = [[NSURLDownload alloc] initWithRequest:request delegate:self];
