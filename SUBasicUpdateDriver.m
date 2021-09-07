@@ -338,6 +338,7 @@
 	BOOL hostXPC = [fman fileExistsAtPath:[[host bundlePath] stringByAppendingPathComponent:@"Contents/XPCServices/com.andymatuschak.Sparkle.SandboxService.xpc"]];
 	BOOL updateXPC = [fman fileExistsAtPath:[[host bundlePath] stringByAppendingPathComponent:@"Contents/Frameworks/MIKUpdate.framework/XPCServices/com.andymatuschak.Sparkle.SandboxService.xpc"]];
 	BOOL useXPC = running10_7 && (hostXPC || updateXPC);
+    if (self.usesInstallerBasedInstallation) useXPC = NO;
 	
 	// Give the host app an opportunity to postpone the install and relaunch.
 	static BOOL postponedOnce = NO;
