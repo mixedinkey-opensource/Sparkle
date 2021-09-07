@@ -606,6 +606,7 @@
 				FA1941C40D94A6EA00DD942E /* Configurations */,
 				8B887B5F1517F3AB000BB292 /* Frameworks */,
 				034768DFFF38A50411DB9C8B /* Products */,
+				83C6846A26E7A958006E2AEC /* Recovered References */,
 			);
 			name = Sparkle;
 			sourceTree = "<group>";
@@ -821,6 +822,15 @@
 				6158A1C4137904B300487EC1 /* SUUpdater_Private.h */,
 			);
 			name = "Update Control";
+			sourceTree = "<group>";
+		};
+		83C6846A26E7A958006E2AEC /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				618E9CFC0E7328F1004646D8 /* dsa_pub.pem */,
+				946D995E1648708C00145DA7 /* Sparkle.strings */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		8B887B5F1517F3AB000BB292 /* Frameworks */ = {

@@ -59,6 +59,9 @@
 
 @property (nonatomic, retain) SUUnarchiver *unarchiver;
 
+// MIK Live installer support
+@property (nonatomic) BOOL usesInstallerBasedInstallation;
+
 @end
 
 #endif

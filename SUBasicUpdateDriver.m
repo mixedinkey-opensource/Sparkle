@@ -228,7 +228,12 @@
 
 - (BOOL)validateUpdateDownloadedToPath:(NSString *)downloadedPath extractedToPath:(NSString *)extractedPath DSASignature:(NSString *)DSASignature publicDSAKey:(NSString *)publicDSAKey
 {
-	NSString *newBundlePath = [SUInstaller appPathInUpdateFolder:extractedPath forHost:host];
+    if (self.usesInstallerBasedInstallation) {
+        // TODO: spend more time on this to get this check working, otherwise in the meantime we'll rely on macOS which will check that the installer is notarized and signed anyways
+        return YES;
+    }
+    
+    NSString *newBundlePath = [SUInstaller appPathInUpdateFolder:extractedPath forHost:host];
 	if (newBundlePath)
 	{
 		NSError *error = nil;
