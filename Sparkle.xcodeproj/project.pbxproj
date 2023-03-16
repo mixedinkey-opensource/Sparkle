@@ -1637,6 +1637,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FA1941CA0D94A70100DD942E /* ConfigFrameworkDebug.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				COMBINE_HIDPI_IMAGES = YES;
 				INSTALL_PATH = "@rpath";
 				PRODUCT_BUNDLE_IDENTIFIER = org.andymatuschak.Sparkle;
@@ -1647,6 +1648,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FA1941D50D94A70100DD942E /* ConfigFrameworkRelease.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "@rpath";
