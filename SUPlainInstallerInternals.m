@@ -450,37 +450,48 @@ static BOOL AuthorizationExecuteWithPrivilegesAndWait(AuthorizationRef authoriza
 	hadFileAtDest = (err == noErr);	// There is a file at the destination, move it aside. If we normalized the name, we might not get here, so don't error.
 	if( hadFileAtDest )
 	{
+		NSLog(@";;; #100");
 		if (0 != access([dst fileSystemRepresentation], W_OK) || 0 != access([[dst stringByDeletingLastPathComponent] fileSystemRepresentation], W_OK))
 		{
+			NSLog(@";;; #200");
 			return [self _copyPathWithForcedAuthentication:src toPath:dst temporaryPath:tmpPath error:error];
 		}
 	}
 	else
 	{
+		NSLog(@";;; #300");
 		if (0 != access([[dst stringByDeletingLastPathComponent] fileSystemRepresentation], W_OK)
 			|| 0 != access([[[dst stringByDeletingLastPathComponent] stringByDeletingLastPathComponent] fileSystemRepresentation], W_OK))
 		{
+			NSLog(@";;; #400");
 			return [self _copyPathWithForcedAuthentication:src toPath:dst temporaryPath:tmpPath error:error];
 		}
 	}
 	
 	if( hadFileAtDest )
 	{
+		NSLog(@";;; #500");
 		err = FSPathMakeRef((UInt8 *)[[tmpPath stringByDeletingLastPathComponent] fileSystemRepresentation], &tmpDirRef, NULL);
-		if (err != noErr)
+		if (err != noErr) {
+			NSLog(@";;; #600");
 			FSPathMakeRef((UInt8 *)[[dst stringByDeletingLastPathComponent] fileSystemRepresentation], &tmpDirRef, NULL);
+		}
 	}
 	
 	err = FSPathMakeRef((UInt8 *)[[dst stringByDeletingLastPathComponent] fileSystemRepresentation], &dstDirRef, NULL);
 
 	if (err == noErr && hadFileAtDest)
 	{
+		NSLog(@";;; #700");
         NSFileManager *manager = [[[NSFileManager alloc] init] autorelease];
         BOOL success = [manager moveItemAtPath:dst toPath:tmpPath error:error];
         if (!success && hadFileAtDest)
         {
-            if (error != NULL)
-                *error = [NSError errorWithDomain:SUSparkleErrorDomain code:SUFileCopyFailure userInfo:[NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"Couldn't move %@ to %@.", dst, tmpPath] forKey:NSLocalizedDescriptionKey]];
+			NSLog(@";;; #800");
+			if (error != NULL) {
+				NSLog(@";;; #900");
+				*error = [NSError errorWithDomain:SUSparkleErrorDomain code:SUFileCopyFailure userInfo:[NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"Couldn't move %@ to %@.", dst, tmpPath] forKey:NSLocalizedDescriptionKey]];
+			}
             return NO;
         }
 	}
@@ -488,15 +499,21 @@ static BOOL AuthorizationExecuteWithPrivilegesAndWait(AuthorizationRef authoriza
 	err = FSPathMakeRef((UInt8 *)[src fileSystemRepresentation], &srcRef, NULL);
 	if (err == noErr)
 	{
+		NSLog(@";;; #1000");
 		NSFileManager *manager = [[[NSFileManager alloc] init] autorelease];
 		BOOL success = [manager copyItemAtPath:src toPath:dst error:error];
 		if (!success)
 		{
+			NSLog(@";;; #1100");
 			// We better move the old version back to its old location
-			if( hadFileAtDest )
+			if( hadFileAtDest ) {
+				NSLog(@";;; #1200");
 				success = [manager moveItemAtPath:tmpPath toPath:dst error:error];
-			if (!success && error != NULL)
+			}
+			if (!success && error != NULL) {
+				NSLog(@";;; #1300");
 				*error = [NSError errorWithDomain:SUSparkleErrorDomain code:SUFileCopyFailure userInfo:[NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"Couldn't move %@ to %@.", dst, tmpPath] forKey:NSLocalizedDescriptionKey]];
+			}
 			return NO;
 
 		}
@@ -516,6 +533,7 @@ static BOOL AuthorizationExecuteWithPrivilegesAndWait(AuthorizationRef authoriza
 	else
 		[self releaseFromQuarantine:dst];
 	
+	NSLog(@";;; #1400");
 	return YES;
 }
 
