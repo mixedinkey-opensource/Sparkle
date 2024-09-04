@@ -63,7 +63,13 @@ static void peer_event_handler(xpc_connection_t peer, xpc_object_t event)
             
             NSError *launchError = nil;
             NSRunningApplication *runningApplication = [[NSWorkspace sharedWorkspace] launchApplicationAtURL:[NSURL fileURLWithPath:relaunchToolPath] options:NSWorkspaceLaunchNewInstance configuration:@{NSWorkspaceLaunchConfigurationArguments:arguments} error:&launchError];
-            [runningApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+			
+//            [runningApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+            if (@available(macOS 14.0, *)) {
+                // Calling activateWithOptions: in macOS 14 and above does not relaunch the application after update
+            } else {
+                [runningApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+            }
 			
 			// send response to indicate ok
 			xpc_object_t reply = xpc_dictionary_create_reply(event);
